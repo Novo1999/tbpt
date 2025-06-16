@@ -27,6 +27,7 @@
     "jotai-tanstack-query": "^0.9.0",
     "lucide": "^0.515.0",
     "lucide-react": "^0.515.0",
+    "motion": "^12.18.1",
     "next": "15.3.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
