@@ -49,7 +49,6 @@ const TextPage = () => {
   const [isAuthenticated] = useAtom(isAuthAtom)
   const [tabs, setTabs] = useAtom(tabsAtom)
   const [selectedTab, setSelectedTab] = useAtom(selectedTabAtom)
-  console.log('🚀 ~ TextPage ~ selectedTab:', selectedTab)
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -76,7 +75,6 @@ const TextPage = () => {
     setTabs(removeItem(tabs, item))
   }
   const add = () => {
-    console.log(2)
     setTabs((prev) => [...prev, { id: crypto.randomUUID(), text: 'New item' }])
   }
 
@@ -99,6 +97,8 @@ const TextPage = () => {
       setActiveId(null)
     }
   }
+  // TODO: ADD THIS TO div
+  // className={`${isAuthenticated ? 'opacity-100' : 'opacity-0'} `}
   return (
     <div>
       <nav className="flex justify-between flex-col sm:flex-row p-4">
@@ -129,7 +129,7 @@ const TextPage = () => {
           </motion.button>
         </nav>
 
-        <main>
+        <main className='mx-4 pt-4'>
           <AnimatePresence mode="wait">
             <motion.div key={selectedTab ? selectedTab.id : 'empty'} animate={{ opacity: 1, y: 0 }} initial={{ opacity: 0, y: 20 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.15 }}>
               {selectedTab ? selectedTab.id : '😋'}
