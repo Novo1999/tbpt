@@ -5,6 +5,7 @@ import { Tab } from '@/app/[slug]/text/components/Tab'
 import { Button } from '@/components/ui/button'
 import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, KeyboardSensor, PointerSensor, rectIntersection, useSensor, useSensors } from '@dnd-kit/core'
 import { arrayMove, rectSortingStrategy, SortableContext, sortableKeyboardCoordinates } from '@dnd-kit/sortable'
+import { useQuery } from '@tanstack/react-query'
 import { AnimatePresence, motion } from 'framer-motion'
 import { atom, useAtom } from 'jotai'
 import { Plus } from 'lucide-react'
@@ -49,6 +50,12 @@ const TextPage = () => {
   const [isAuthenticated] = useAtom(isAuthAtom)
   const [tabs, setTabs] = useAtom(tabsAtom)
   const [selectedTab, setSelectedTab] = useAtom(selectedTabAtom)
+  const { slug } = useParams()
+
+  const textQuery = useQuery({
+    queryKey: ['texts', slug],
+    // queryFn: () => 
+  })
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -61,8 +68,6 @@ const TextPage = () => {
       coordinateGetter: sortableKeyboardCoordinates,
     })
   )
-
-  const { slug } = useParams()
 
   useEffect(() => {
     // if (!isAuthenticated) redirect(('/' + slug) as string)
@@ -129,7 +134,7 @@ const TextPage = () => {
           </motion.button>
         </nav>
 
-        <main className='mx-4 pt-4'>
+        <main className="mx-4 pt-4">
           <AnimatePresence mode="wait">
             <motion.div key={selectedTab ? selectedTab.id : 'empty'} animate={{ opacity: 1, y: 0 }} initial={{ opacity: 0, y: 20 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.15 }}>
               {selectedTab ? selectedTab.id : '😋'}
