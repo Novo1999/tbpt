@@ -10,7 +10,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { atom, useAtom } from 'jotai'
 import { Plus } from 'lucide-react'
 import { useParams } from 'next/navigation'
-import { useEffect } from 'react'
+import { useEffect, useId } from 'react'
 import TextEditor from './components/TextEditor'
 
 export type TextTab = {
@@ -55,7 +55,7 @@ const TextPage = () => {
 
   // const textQuery = useQuery({
   //   queryKey: ['texts', slug],
-  //   // queryFn: () => 
+  //   // queryFn: () =>
   // })
 
   const sensors = useSensors(
@@ -103,6 +103,7 @@ const TextPage = () => {
       setActiveId(null)
     }
   }
+  const id = useId()
   // TODO: ADD THIS TO div
   // className={`${isAuthenticated ? 'opacity-100' : 'opacity-0'} `}
   return (
@@ -121,7 +122,7 @@ const TextPage = () => {
       <div className="window">
         <nav className="flex justify-between flex-wrap items-center mx-4">
           <div className="flex flex-wrap">
-            <DndContext sensors={sensors} collisionDetection={rectIntersection} onDragEnd={handleDragEnd} onDragStart={handleDragStart}>
+            <DndContext id={id} sensors={sensors} collisionDetection={rectIntersection} onDragEnd={handleDragEnd} onDragStart={handleDragStart}>
               <SortableContext items={tabs.map((item) => item.id)} strategy={rectSortingStrategy}>
                 {tabs.map((item) => (
                   <Tab onRemove={() => remove(item)} key={item.id} item={item} isSelected={selectedTab?.id === item.id} onClick={() => setSelectedTab(item)} />
