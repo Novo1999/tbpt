@@ -79,7 +79,7 @@ const UserAccessModal = ({ user }: UserAccessModalProps) => {
             {(user ? pendingForAccess : pending) ? <Loader className="animate-spin" /> : user ? 'Access' : 'Create'}
           </Button>
         </form>
-        <small className="text-red-500">{(user ? stateForAccess?.status : !state?.status) && (user ? stateForAccess?.message : !state?.message)}</small>
+        <small className="text-red-500">{(user ? stateForAccess?.message : !state?.message)}</small>
       </DialogContent>
     </Dialog>
   )

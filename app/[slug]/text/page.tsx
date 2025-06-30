@@ -11,6 +11,7 @@ import { atom, useAtom } from 'jotai'
 import { Plus } from 'lucide-react'
 import { useParams } from 'next/navigation'
 import { useEffect } from 'react'
+import TextEditor from './components/TextEditor'
 
 export type TextTab = {
   id: string
@@ -52,10 +53,10 @@ const TextPage = () => {
   const [selectedTab, setSelectedTab] = useAtom(selectedTabAtom)
   const { slug } = useParams()
 
-  const textQuery = useQuery({
-    queryKey: ['texts', slug],
-    // queryFn: () => 
-  })
+  // const textQuery = useQuery({
+  //   queryKey: ['texts', slug],
+  //   // queryFn: () => 
+  // })
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -137,7 +138,7 @@ const TextPage = () => {
         <main className="mx-4 pt-4">
           <AnimatePresence mode="wait">
             <motion.div key={selectedTab ? selectedTab.id : 'empty'} animate={{ opacity: 1, y: 0 }} initial={{ opacity: 0, y: 20 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.15 }}>
-              {selectedTab ? selectedTab.id : '😋'}
+              <TextEditor />
             </motion.div>
           </AnimatePresence>
         </main>
