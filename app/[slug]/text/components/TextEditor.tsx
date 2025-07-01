@@ -1,10 +1,40 @@
 'use client'
+import { SetStateAction } from 'jotai'
 import { CSSProperties, KeyboardEvent, useCallback, useState } from 'react'
-import { BaseEditor, createEditor, Editor, Element, Transforms } from 'slate'
-import { Editable, ReactEditor, RenderElementProps, RenderLeafProps, Slate, withReact } from 'slate-react'
+import {
+  BaseEditor,
+  createEditor,
+  Descendant,
+  Editor,
+  Element,
+  Transforms,
+} from 'slate'
+import {
+  Editable,
+  ReactEditor,
+  RenderElementProps,
+  RenderLeafProps,
+  Slate,
+  withReact,
+} from 'slate-react'
 
-type CustomElement = { type: string; children: CustomText[] }
-type CustomText = { text: string; bold?: boolean; italic?: boolean }
+interface TextTab {
+  id: string
+  text: Descendant[]
+}
+
+type SetAtom<Args extends unknown[], Result> = (...args: Args) => Result
+
+type CustomElement = {
+  type: string
+  children: Descendant[]
+}
+
+type CustomText = {
+  text: string
+  bold?: boolean
+  italic?: boolean
+}
 
 declare module 'slate' {
   interface CustomTypes {
@@ -13,13 +43,6 @@ declare module 'slate' {
     Text: CustomText
   }
 }
-
-const initialValue = [
-  {
-    type: 'paragraph',
-    children: [{ text: 'A line of text in a paragraph.' }],
-  },
-]
 
 const CodeElement = (props: RenderElementProps) => {
   return (
@@ -51,8 +74,30 @@ const Leaf = (props: RenderLeafProps) => {
   )
 }
 
-const TextEditor = () => {
+const TextEditor = ({
+  tab,
+  setTabs,
+}: {
+  tab: TextTab
+  setTabs: SetAtom<[SetStateAction<TextTab[]>], void>
+}) => {
   const [editor] = useState(() => withReact(createEditor()))
+
+  // Fix: Proper state update logic
+  const handleEditorChange = useCallback(
+    (newValue: Descendant[]) => {
+      setTabs((prev) => {
+        // Fix: Return a new array with updated tab
+        return prev.map((prevTab) => {
+          if (prevTab.id === tab.id) {
+            return { ...prevTab, text: newValue } // Return new object
+          }
+          return prevTab
+        })
+      })
+    },
+    [setTabs, tab.id]
+  )
 
   const renderEl = useCallback((props: RenderElementProps) => {
     switch (props.element.type) {
@@ -67,14 +112,21 @@ const TextEditor = () => {
     return <Leaf {...props} />
   }, [])
 
+  // Fix: Add Ctrl/Cmd key checks for shortcuts
   const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (!event.ctrlKey && !event.metaKey) return // Only handle Ctrl/Cmd shortcuts
+
     switch (event.key) {
       case '`': {
         event.preventDefault()
         const [match] = Editor.nodes(editor, {
           match: (n) => Element.isElement(n) && n.type === 'code',
         })
-        Transforms.setNodes(editor, { type: match ? 'paragraph' : 'code' }, { match: (n) => Element.isElement(n) && Editor.isBlock(editor, n) })
+        Transforms.setNodes(
+          editor,
+          { type: match ? 'paragraph' : 'code' },
+          { match: (n) => Element.isElement(n) && Editor.isBlock(editor, n) }
+        )
         break
       }
       case 'b': {
@@ -101,8 +153,17 @@ const TextEditor = () => {
   }
 
   return (
-    <Slate editor={editor} initialValue={initialValue}>
-      <Editable renderLeaf={renderLeaf} renderElement={renderEl} onKeyDown={handleKeyDown} className="border p-4 rounded-lg" />
+    <Slate
+      editor={editor}
+      initialValue={tab.text}
+      onChange={handleEditorChange}
+    >
+      <Editable
+        renderLeaf={renderLeaf}
+        renderElement={renderEl}
+        onKeyDown={handleKeyDown}
+        className='border p-4 rounded-lg'
+      />
     </Slate>
   )
 }

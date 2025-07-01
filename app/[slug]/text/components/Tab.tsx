@@ -26,7 +26,8 @@ export const Tab = ({ item, onClick, onRemove, isSelected }: Props) => {
         className={`flex items-center justify-between gap-2 border-b border-r p-2 rounded-b transition-colors duration-200 ${isSelected ? 'bg-gray-100' : 'bg-white'}`}
         onClick={onClick}
       >
-        <span className="truncate max-w-[80px] text-sm">{item?.text.slice(0, 10)}...</span>
+        {/* <span className="truncate max-w-[80px] text-sm">{item?.text.slice(0, 10)}...</span> */}
+        <span className="truncate max-w-[80px] text-sm">hello...</span>
         <button
           className="text-gray-500 hover:text-red-500"
           onClick={(e) => {

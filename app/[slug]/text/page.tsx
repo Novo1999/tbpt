@@ -3,27 +3,52 @@
 import { isAuthAtom } from '@/app/[slug]/components/UserAccessModal'
 import { Tab } from '@/app/[slug]/text/components/Tab'
 import { Button } from '@/components/ui/button'
-import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, KeyboardSensor, PointerSensor, rectIntersection, useSensor, useSensors } from '@dnd-kit/core'
-import { arrayMove, rectSortingStrategy, SortableContext, sortableKeyboardCoordinates } from '@dnd-kit/sortable'
-import { useQuery } from '@tanstack/react-query'
+import {
+  DndContext,
+  DragEndEvent,
+  DragOverlay,
+  DragStartEvent,
+  KeyboardSensor,
+  PointerSensor,
+  rectIntersection,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core'
+import {
+  arrayMove,
+  rectSortingStrategy,
+  SortableContext,
+  sortableKeyboardCoordinates,
+} from '@dnd-kit/sortable'
 import { AnimatePresence, motion } from 'framer-motion'
 import { atom, useAtom } from 'jotai'
 import { Plus } from 'lucide-react'
 import { useParams } from 'next/navigation'
 import { useEffect, useId } from 'react'
+import { Node } from 'slate'
 import TextEditor from './components/TextEditor'
+import { dummyTextTabs } from './dummy'
 
-export type TextTab = {
-  id: string
+export type CustomText = {
   text: string
+  bold?: boolean
+  italic?: boolean
+  underline?: boolean
+  code?: boolean
 }
-export const dummyTextTabs: TextTab[] = [
-  { id: 'intro', text: 'Welcome to the platform! Here’s a quick overview.' },
-  { id: 'features', text: 'Our app includes powerful tools for productivity.' },
-  { id: 'support', text: 'Need help? Contact our support team anytime.' },
-  { id: 'terms', text: 'Please read and agree to our terms and conditions.' },
-  { id: 'privacy', text: 'Your data is safe. Read our privacy policy.' },
-]
+export type CustomElement =
+  | { type: 'heading-one'; children: Descendant[] }
+  | { type: 'heading-two'; children: Descendant[] }
+  | { type: 'paragraph'; children: Descendant[] }
+  | { type: 'list-item'; children: Descendant[] }
+  | { type: 'block-quote'; children: Descendant[] }
+
+export type Descendant = CustomElement | CustomText
+
+export interface TextTab {
+  id: string
+  text: Descendant[]
+}
 
 export function removeItem<T>([...arr]: T[], item: T) {
   const index = arr.indexOf(item)
@@ -43,9 +68,19 @@ export function closestItem<T>(arr: T[], item: T) {
 }
 
 const tabsAtom = atom<TextTab[]>(dummyTextTabs)
-const selectedTabAtom = atom<TextTab>()
+const selectedTabAtom = atom<TextTab>(dummyTextTabs[0])
 const activeIdAtom = atom<string | null>('')
 
+const serialize = (value: Descendant[]) => {
+  return value.map((n) => Node.string(n)).join('\n')
+}
+
+const deserialize = (string: string): Descendant[] => {
+  return string.split('\n').map((line) => ({
+    type: 'paragraph',
+    children: [{ text: line }]
+  }))
+}
 const TextPage = () => {
   const [activeId, setActiveId] = useAtom(activeIdAtom)
   const [isAuthenticated] = useAtom(isAuthAtom)
@@ -81,7 +116,18 @@ const TextPage = () => {
     setTabs(removeItem(tabs, item))
   }
   const add = () => {
-    setTabs((prev) => [...prev, { id: crypto.randomUUID(), text: 'New item' }])
+    setTabs((prev) => [
+      ...prev,
+      {
+        id: crypto.randomUUID(),
+        text: [
+          {
+            type: 'paragraph',
+            children: [{ text: 'New item' }],
+          },
+        ], // Changed from string to Descendant[]
+      },
+    ])
   }
 
   const handleDragStart = (event: DragStartEvent) => {
@@ -108,38 +154,70 @@ const TextPage = () => {
   // className={`${isAuthenticated ? 'opacity-100' : 'opacity-0'} `}
   return (
     <div>
-      <nav className="flex justify-between flex-col sm:flex-row p-4">
-        <h1 className="text-5xl font-bold mb-4">
-          T<small className="text-lg">he</small> B<small className="text-lg">etter</small> P<small className="text-lg">rotected</small> T<small className="text-lg">ext</small>{' '}
+      <nav className='flex justify-between flex-col sm:flex-row p-4'>
+        <h1 className='text-5xl font-bold mb-4'>
+          T<small className='text-lg'>he</small> B
+          <small className='text-lg'>etter</small> P
+          <small className='text-lg'>rotected</small> T
+          <small className='text-lg'>ext</small>{' '}
         </h1>
-        <div className="flex gap-2">
+        <div className='flex gap-2'>
           <Button>Reload</Button>
           <Button>Save</Button>
           <Button>Change Password</Button>
           <Button>Delete</Button>
         </div>
       </nav>
-      <div className="window">
-        <nav className="flex justify-between flex-wrap items-center mx-4">
-          <div className="flex flex-wrap">
-            <DndContext id={id} sensors={sensors} collisionDetection={rectIntersection} onDragEnd={handleDragEnd} onDragStart={handleDragStart}>
-              <SortableContext items={tabs.map((item) => item.id)} strategy={rectSortingStrategy}>
+      <div className='window'>
+        <nav className='flex justify-between flex-wrap items-center mx-4'>
+          <div className='flex flex-wrap'>
+            <DndContext
+              id={id}
+              sensors={sensors}
+              collisionDetection={rectIntersection}
+              onDragEnd={handleDragEnd}
+              onDragStart={handleDragStart}
+            >
+              <SortableContext
+                items={tabs.map((item) => item.id)}
+                strategy={rectSortingStrategy}
+              >
                 {tabs.map((item) => (
-                  <Tab onRemove={() => remove(item)} key={item.id} item={item} isSelected={selectedTab?.id === item.id} onClick={() => setSelectedTab(item)} />
+                  <Tab
+                    onRemove={() => remove(item)}
+                    key={item.id}
+                    item={item}
+                    isSelected={selectedTab?.id === item.id}
+                    onClick={() => setSelectedTab(item)}
+                  />
                 ))}
               </SortableContext>
-              <DragOverlay>{activeId ? <Tab item={tabs.find((tab) => tab.id === activeId)} /> : null}</DragOverlay>
+              <DragOverlay>
+                {activeId ? (
+                  <Tab item={tabs.find((tab) => tab.id === activeId)} />
+                ) : null}
+              </DragOverlay>
             </DndContext>
           </div>
-          <motion.button onClick={add} className="rounded-lg border p-2 ml-2" whileTap={{ scale: 0.9 }}>
+          <motion.button
+            onClick={add}
+            className='rounded-lg border p-2 ml-2'
+            whileTap={{ scale: 0.9 }}
+          >
             <Plus />
           </motion.button>
         </nav>
 
-        <main className="mx-4 pt-4">
-          <AnimatePresence mode="wait">
-            <motion.div key={selectedTab ? selectedTab.id : 'empty'} animate={{ opacity: 1, y: 0 }} initial={{ opacity: 0, y: 20 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.15 }}>
-              <TextEditor />
+        <main className='mx-4 pt-4'>
+          <AnimatePresence mode='wait'>
+            <motion.div
+              key={selectedTab ? selectedTab.id : 'empty'}
+              animate={{ opacity: 1, y: 0 }}
+              initial={{ opacity: 0, y: 20 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.15 }}
+            >
+              <TextEditor setTabs={setTabs} tab={selectedTab} />
             </motion.div>
           </AnimatePresence>
         </main>
