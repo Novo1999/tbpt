@@ -1,26 +1,45 @@
-import { Prisma, PrismaClient } from '../app/generated/prisma'
+import { dummyTextTabs } from '@/app/[slug]/text/dummy'
+import { serialize } from '@/app/[slug]/text/page'
+import { PrismaClient } from '@prisma/client'
 
 const prisma = new PrismaClient()
 
-const userData: Prisma.UserCreateInput[] = [
-  {
-    slug: 'Alice',
-    password: 'jitum',
-  },
-  {
-    slug: 'bob',
-    password: 'jitum',
-  },
-  {
-    slug: 'zurain',
-    password: 'jitum',
-  },
-]
+async function main() {
+  // First, create a user if you don't have one
+  const user = await prisma.user.upsert({
+    where: { slug: 'demo' },
+    update: {},
+    create: {
+      slug: 'demo',
+      password: 'test',
+      // add other required user fields
+    },
+  })
 
-export async function main() {
-  for (const u of userData) {
-    await prisma.user.create({ data: u })
+  // Clear existing text data (optional)
+  await prisma.text.deleteMany({})
+
+  // Seed the text data
+  for (let i = 0; i < dummyTextTabs.length; i++) {
+    const tab = dummyTextTabs[i]
+
+    await prisma.text.create({
+      data: {
+        content: JSON.stringify(serialize(tab.text)), // Convert Slate content to JSON string
+        userId: user.id,
+        order: i + 1, // Use array index + 1 for ordering
+      },
+    })
   }
+
+  console.log('Seeded text data successfully!')
 }
 
 main()
+  .catch((e) => {
+    console.error(e)
+    process.exit(1)
+  })
+  .finally(async () => {
+    await prisma.$disconnect()
+  })

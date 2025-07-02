@@ -1,29 +1,9 @@
 'use client'
-import { SetStateAction } from 'jotai'
+import { selectedTabAtom, updateTabsAtom } from '@/app/[slug]/text/page'
+import { useAtomValue, useSetAtom } from 'jotai'
 import { CSSProperties, KeyboardEvent, useCallback, useState } from 'react'
-import {
-  BaseEditor,
-  createEditor,
-  Descendant,
-  Editor,
-  Element,
-  Transforms,
-} from 'slate'
-import {
-  Editable,
-  ReactEditor,
-  RenderElementProps,
-  RenderLeafProps,
-  Slate,
-  withReact,
-} from 'slate-react'
-
-interface TextTab {
-  id: string
-  text: Descendant[]
-}
-
-type SetAtom<Args extends unknown[], Result> = (...args: Args) => Result
+import { BaseEditor, createEditor, Descendant, Editor, Element, Transforms } from 'slate'
+import { Editable, ReactEditor, RenderElementProps, RenderLeafProps, Slate, withReact } from 'slate-react'
 
 type CustomElement = {
   type: string
@@ -74,19 +54,15 @@ const Leaf = (props: RenderLeafProps) => {
   )
 }
 
-const TextEditor = ({
-  tab,
-  setTabs,
-}: {
-  tab: TextTab
-  setTabs: SetAtom<[SetStateAction<TextTab[]>], void>
-}) => {
+const TextEditor = () => {
   const [editor] = useState(() => withReact(createEditor()))
+  const updateTabs = useSetAtom(updateTabsAtom)
+  const tab = useAtomValue(selectedTabAtom)
 
   // Fix: Proper state update logic
   const handleEditorChange = useCallback(
     (newValue: Descendant[]) => {
-      setTabs((prev) => {
+      updateTabs((prev) => {
         // Fix: Return a new array with updated tab
         return prev.map((prevTab) => {
           if (prevTab.id === tab.id) {
@@ -96,7 +72,7 @@ const TextEditor = ({
         })
       })
     },
-    [setTabs, tab.id]
+    [updateTabs, tab.id]
   )
 
   const renderEl = useCallback((props: RenderElementProps) => {
@@ -122,11 +98,7 @@ const TextEditor = ({
         const [match] = Editor.nodes(editor, {
           match: (n) => Element.isElement(n) && n.type === 'code',
         })
-        Transforms.setNodes(
-          editor,
-          { type: match ? 'paragraph' : 'code' },
-          { match: (n) => Element.isElement(n) && Editor.isBlock(editor, n) }
-        )
+        Transforms.setNodes(editor, { type: match ? 'paragraph' : 'code' }, { match: (n) => Element.isElement(n) && Editor.isBlock(editor, n) })
         break
       }
       case 'b': {
@@ -153,17 +125,8 @@ const TextEditor = ({
   }
 
   return (
-    <Slate
-      editor={editor}
-      initialValue={tab.text}
-      onChange={handleEditorChange}
-    >
-      <Editable
-        renderLeaf={renderLeaf}
-        renderElement={renderEl}
-        onKeyDown={handleKeyDown}
-        className='border p-4 rounded-lg'
-      />
+    <Slate editor={editor} initialValue={tab.text} onChange={handleEditorChange}>
+      <Editable renderLeaf={renderLeaf} renderElement={renderEl} onKeyDown={handleKeyDown} className="border p-4 rounded-lg" />
     </Slate>
   )
 }
