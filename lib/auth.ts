@@ -1,12 +1,13 @@
 import { User } from '@/app/types/user'
-import { JWTPayload, SignJWT, jwtVerify } from 'jose'
+import * as jose from 'jose'
 import { cookies } from 'next/headers'
 import { NextRequest, NextResponse } from 'next/server'
+const { SignJWT, jwtVerify } = jose
 
 const secretKey = process.env.AUTH_SECRET
 const key = new TextEncoder().encode(secretKey)
 
-const encrypt = async (payload: JWTPayload) => {
+const encrypt = async (payload: jose.JWTPayload) => {
   return await new SignJWT(payload)
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
@@ -14,7 +15,8 @@ const encrypt = async (payload: JWTPayload) => {
     .sign(key)
 }
 
-const decrypt = async (input: string) => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const decrypt = async (input: string): Promise<any> => {
   const { payload } = await jwtVerify(input, key, {
     algorithms: ['HS256'],
   })
@@ -26,7 +28,7 @@ const login = async (user: Partial<User>) => {
   const userData = { slug: user?.slug, id: user?.id }
 
   // Create the session
-  const expires = new Date(Date.now() + 10 * 1000)
+  const expires = new Date(Date.now() + 10 * 60 * 1000)
   const session = await encrypt({ userData, expires })
 
   const cookieStore = await cookies()
@@ -51,10 +53,12 @@ const getSession = async () => {
 
 const updateSession = async (request: NextRequest) => {
   const session = request.cookies.get('session')?.value
+  console.log('🚀 ~ updateSession ~ session:', session)
   if (!session) return
 
   const parsed = await decrypt(session)
-  parsed.exp = Math.floor((Date.now() + 10 * 1000) / 1000)
+  parsed.exp = new Date(Date.now() + 10 * 60 * 1000)
+
   const res = NextResponse.next()
   res.cookies.set({
     name: 'session',
@@ -67,3 +71,4 @@ const updateSession = async (request: NextRequest) => {
 }
 
 export { decrypt, encrypt, getSession, login, logout, updateSession }
+

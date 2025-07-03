@@ -17,7 +17,7 @@ export const accessSite = async (prevState: unknown, formData: FormData) => {
     )
 
     if (isPasswordCorrect) {
-      login(user)
+      await login(user)
       return { status: isPasswordCorrect }
     } else return { status: isPasswordCorrect, message: 'Wrong Password' }
   } catch (error) {
