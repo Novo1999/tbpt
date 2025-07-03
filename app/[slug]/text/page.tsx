@@ -80,7 +80,6 @@ const TextPage = () => {
   const [activeId, setActiveId] = useAtom(activeIdAtom)
   const [isAuthenticated] = useAtom(isAuthAtom)
   const [tabs, setTabs] = useAtom(tabsAtom)
-  console.log('🚀 ~ TextPage ~ tabs:', tabs)
   const [selectedTab, setSelectedTab] = useAtom(selectedTabAtom)
   const { slug } = useParams()
 

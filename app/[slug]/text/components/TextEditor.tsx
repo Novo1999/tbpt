@@ -145,7 +145,7 @@ const TextEditor = () => {
   return (
     <Slate
       editor={editor}
-      initialValue={(tab?.content as Descendant[]) || []}
+      initialValue={tab?.content || []}
       onChange={handleEditorChange}
     >
       <Editable
