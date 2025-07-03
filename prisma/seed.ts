@@ -1,5 +1,4 @@
 import { dummyTextTabs } from '@/app/[slug]/text/dummy'
-import htmlSerializer from '@/lib/slate-serialize-deserialize'
 import { PrismaClient } from '@prisma/client'
 
 const prisma = new PrismaClient()
@@ -25,7 +24,7 @@ async function main() {
 
     await prisma.text.create({
       data: {
-        content: htmlSerializer.serialize(tab.text), // Convert Slate content to JSON string
+        content: JSON.stringify(tab.text), // Convert Slate content to JSON string
         userId: user.id,
         order: i + 1, // Use array index + 1 for ordering
       },
