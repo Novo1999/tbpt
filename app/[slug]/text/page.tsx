@@ -5,28 +5,13 @@ import { Tab } from '@/app/[slug]/text/components/Tab'
 import { ParsedText } from '@/app/types/text'
 import { User } from '@/app/types/user'
 import { Button } from '@/components/ui/button'
-import {
-  DndContext,
-  DragEndEvent,
-  DragOverlay,
-  DragStartEvent,
-  KeyboardSensor,
-  PointerSensor,
-  rectIntersection,
-  useSensor,
-  useSensors,
-} from '@dnd-kit/core'
-import {
-  arrayMove,
-  rectSortingStrategy,
-  SortableContext,
-  sortableKeyboardCoordinates,
-} from '@dnd-kit/sortable'
+import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, KeyboardSensor, PointerSensor, rectIntersection, useSensor, useSensors } from '@dnd-kit/core'
+import { arrayMove, rectSortingStrategy, SortableContext, sortableKeyboardCoordinates } from '@dnd-kit/sortable'
 import { useQuery } from '@tanstack/react-query'
 import { AnimatePresence, motion } from 'framer-motion'
 import { atom, useAtom } from 'jotai'
 import { Plus } from 'lucide-react'
-import { useParams } from 'next/navigation'
+import { redirect, useParams, useRouter } from 'next/navigation'
 import { useEffect, useId } from 'react'
 import { Descendant } from 'slate'
 import TextEditor from './components/TextEditor'
@@ -65,20 +50,17 @@ export function closestItem<T>(arr: T[], item: T) {
 const tabsAtom = atom<ParsedText[]>([])
 export const selectedTabAtom = atom<ParsedText>()
 
-export const updateTabsAtom = atom(
-  null,
-  (get, set, update: ParsedText[] | ((prev: ParsedText[]) => ParsedText[])) => {
-    const currentValue = get(tabsAtom)
-    const newValue =
-      typeof update === 'function' ? update(currentValue) : update
-    set(tabsAtom, newValue)
-  }
-)
+export const updateTabsAtom = atom(null, (get, set, update: ParsedText[] | ((prev: ParsedText[]) => ParsedText[])) => {
+  const currentValue = get(tabsAtom)
+  const newValue = typeof update === 'function' ? update(currentValue) : update
+  set(tabsAtom, newValue)
+})
 const activeIdAtom = atom<number | null>()
 
 const TextPage = () => {
+  const { replace } = useRouter()
   const [activeId, setActiveId] = useAtom(activeIdAtom)
-  const [isAuthenticated] = useAtom(isAuthAtom)
+  const [isAuthenticated, setIsAuthenticated] = useAtom(isAuthAtom)
   const [tabs, setTabs] = useAtom(tabsAtom)
   const [selectedTab, setSelectedTab] = useAtom(selectedTabAtom)
   const { slug } = useParams()
@@ -88,13 +70,19 @@ const TextPage = () => {
     queryFn: async () => {
       try {
         const res = await fetch(`/api/texts/${slug}`)
+        console.log(res.status)
+
+        if (res.status === 401) {
+          replace('/')
+        }
+        setIsAuthenticated(true)
         return res.json()
       } catch (error) {
         throw error
       }
     },
   })
-
+  console.log(data)
   useEffect(() => {
     const texts = data?.texts || []
     const parsedTexts: ParsedText[] = texts.map((txt) => ({
@@ -155,9 +143,7 @@ const TextPage = () => {
 
     if (active.id !== over?.id) {
       setTabs((items) => {
-        const oldIndex = items.findIndex(
-          (item) => item.id === Number(active.id)
-        )
+        const oldIndex = items.findIndex((item) => item.id === Number(active.id))
         const newIndex = items.findIndex((item) => item.id === Number(over?.id))
         return arrayMove(items, oldIndex, newIndex)
       })
@@ -165,75 +151,42 @@ const TextPage = () => {
     }
   }
   const id = useId()
-  // TODO: ADD THIS TO div
-  // className={`${isAuthenticated ? 'opacity-100' : 'opacity-0'} `}
+
   return isLoading ? (
     <div>Loading...</div>
   ) : (
-    <div>
-      <nav className='flex justify-between flex-col sm:flex-row p-4'>
-        <h1 className='text-5xl font-bold mb-4'>
-          T<small className='text-lg'>he</small> B
-          <small className='text-lg'>etter</small> P
-          <small className='text-lg'>rotected</small> T
-          <small className='text-lg'>ext</small>{' '}
+    <div className={`${isAuthenticated ? 'opacity-100' : 'opacity-0'} `}>
+      <nav className="flex justify-between flex-col sm:flex-row p-4">
+        <h1 className="text-5xl font-bold mb-4">
+          T<small className="text-lg">he</small> B<small className="text-lg">etter</small> P<small className="text-lg">rotected</small> T<small className="text-lg">ext</small>{' '}
         </h1>
-        <div className='flex gap-2'>
+        <div className="flex gap-2">
           <Button>Reload</Button>
           <Button>Save</Button>
           <Button>Change Password</Button>
           <Button>Delete</Button>
         </div>
       </nav>
-      <div className='window'>
-        <nav className='flex justify-between flex-wrap items-center mx-4'>
-          <div className='flex flex-wrap'>
-            <DndContext
-              id={id}
-              sensors={sensors}
-              collisionDetection={rectIntersection}
-              onDragEnd={handleDragEnd}
-              onDragStart={handleDragStart}
-            >
-              <SortableContext
-                items={tabs.map((item) => item.id)}
-                strategy={rectSortingStrategy}
-              >
+      <div className="window">
+        <nav className="flex justify-between flex-wrap items-center mx-4">
+          <div className="flex flex-wrap">
+            <DndContext id={id} sensors={sensors} collisionDetection={rectIntersection} onDragEnd={handleDragEnd} onDragStart={handleDragStart}>
+              <SortableContext items={tabs.map((item) => item.id)} strategy={rectSortingStrategy}>
                 {tabs.map((item) => (
-                  <Tab
-                    onRemove={() => remove(item)}
-                    key={item.id}
-                    item={item}
-                    isSelected={selectedTab?.id === item.id}
-                    onClick={() => setSelectedTab(item)}
-                  />
+                  <Tab onRemove={() => remove(item)} key={item.id} item={item} isSelected={selectedTab?.id === item.id} onClick={() => setSelectedTab(item)} />
                 ))}
               </SortableContext>
-              <DragOverlay>
-                {activeId ? (
-                  <Tab item={tabs.find((tab) => tab.id === activeId)} />
-                ) : null}
-              </DragOverlay>
+              <DragOverlay>{activeId ? <Tab item={tabs.find((tab) => tab.id === activeId)} /> : null}</DragOverlay>
             </DndContext>
           </div>
-          <motion.button
-            onClick={add}
-            className='rounded-lg border p-2 ml-2'
-            whileTap={{ scale: 0.9 }}
-          >
+          <motion.button onClick={add} className="rounded-lg border p-2 ml-2" whileTap={{ scale: 0.9 }}>
             <Plus />
           </motion.button>
         </nav>
 
-        <main className='mx-4 pt-4'>
-          <AnimatePresence mode='wait'>
-            <motion.div
-              key={selectedTab ? selectedTab.id : 'empty'}
-              animate={{ opacity: 1, y: 0 }}
-              initial={{ opacity: 0, y: 20 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.15 }}
-            >
+        <main className="mx-4 pt-4">
+          <AnimatePresence mode="wait">
+            <motion.div key={selectedTab ? selectedTab.id : 'empty'} animate={{ opacity: 1, y: 0 }} initial={{ opacity: 0, y: 20 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.15 }}>
               {tabs.length > 0 && <TextEditor />}
             </motion.div>
           </AnimatePresence>

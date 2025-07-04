@@ -4,17 +4,6 @@ import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient()
 
 async function main() {
-  // First, create a user if you don't have one
-  const user = await prisma.user.upsert({
-    where: { slug: 'demo' },
-    update: {},
-    create: {
-      slug: 'demo',
-      password: 'test',
-      // add other required user fields
-    },
-  })
-
   // Clear existing text data (optional)
   await prisma.text.deleteMany({})
 
@@ -24,8 +13,8 @@ async function main() {
 
     await prisma.text.create({
       data: {
-        content: JSON.stringify(tab.text), // Convert Slate content to JSON string
-        userId: user.id,
+        content: JSON.stringify(tab.content), // Convert Slate content to JSON string
+        userId: 44,
         order: i + 1, // Use array index + 1 for ordering
       },
     })

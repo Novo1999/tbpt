@@ -13,7 +13,7 @@ import { redirect, useParams } from 'next/navigation'
 import { useActionState, useEffect } from 'react'
 
 type UserAccessModalProps = {
-  user?: User | null
+  user?: User
 }
 
 const openAtom = atom(true)
@@ -41,9 +41,9 @@ const UserAccessModal = ({ user }: UserAccessModalProps) => {
   const [stateForAccess, formActionForAccess, pendingForAccess] = useActionState(accessSite, initialStateForAccess)
 
   useEffect(() => setSlugVal(slug as string), [slug, setSlugVal])
-  
+
   useEffect(() => {
-    if (!user ? !!state.status : !!stateForAccess.status) {
+    if (!user ? !!state.status : !!stateForAccess?.status) {
       setIsAuthenticated(true)
       redirect((!user ? state?.data?.slug : slug) + '/text')
     }
@@ -79,7 +79,7 @@ const UserAccessModal = ({ user }: UserAccessModalProps) => {
             {(user ? pendingForAccess : pending) ? <Loader className="animate-spin" /> : user ? 'Access' : 'Create'}
           </Button>
         </form>
-        <small className="text-red-500">{(user ? stateForAccess?.message : !state?.message)}</small>
+        <small className="text-red-500">{user ? stateForAccess?.message : !state?.message}</small>
       </DialogContent>
     </Dialog>
   )

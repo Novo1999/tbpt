@@ -1,9 +1,9 @@
-import { TextTab } from "./page";
+import { ParsedText } from '@/app/types/text'
 
-export const dummyTextTabs: TextTab[] = [
+export const dummyTextTabs: ParsedText[] = [
   {
-    id: 'intro',
-    text: [
+    id: 1,
+    content: [
       {
         type: 'heading-one',
         children: [{ text: 'Welcome to the Platform!' }],
@@ -36,10 +36,11 @@ export const dummyTextTabs: TextTab[] = [
         ],
       },
     ],
+    order: 1,
   },
   {
-    id: 'features',
-    text: [
+    id: 2,
+    content: [
       {
         type: 'heading-one',
         children: [{ text: 'Powerful Features' }],
@@ -63,29 +64,19 @@ export const dummyTextTabs: TextTab[] = [
         children: [
           {
             type: 'list-item',
-            children: [
-              { text: 'Real-time collaboration with ' },
-              { text: 'multiple users', italic: true },
-            ],
+            children: [{ text: 'Real-time collaboration with ' }, { text: 'multiple users', italic: true }],
           } as const,
           {
             type: 'list-item',
-            children: [
-              { text: 'Advanced text formatting and rich content editing' },
-            ],
+            children: [{ text: 'Advanced text formatting and rich content editing' }],
           } as const,
           {
             type: 'list-item',
-            children: [
-              { text: 'Cloud synchronization across all your devices' },
-            ],
+            children: [{ text: 'Cloud synchronization across all your devices' }],
           } as const,
           {
             type: 'list-item',
-            children: [
-              { text: 'Export to multiple formats: ' },
-              { text: 'HTML, PDF, Markdown', code: true },
-            ],
+            children: [{ text: 'Export to multiple formats: ' }, { text: 'HTML, PDF, Markdown', code: true }],
           } as const,
         ],
       } as const,
@@ -99,10 +90,11 @@ export const dummyTextTabs: TextTab[] = [
         ],
       } as const,
     ],
+    order: 2,
   },
   {
-    id: 'support',
-    text: [
+    id: 3,
+    content: [
       {
         type: 'heading-one',
         children: [{ text: 'Customer Support' }],
@@ -126,25 +118,15 @@ export const dummyTextTabs: TextTab[] = [
         children: [
           {
             type: 'list-item',
-            children: [
-              { text: 'Email us at: ' },
-              { text: 'support@platform.com', code: true },
-            ],
+            children: [{ text: 'Email us at: ' }, { text: 'support@platform.com', code: true }],
           } as const,
           {
             type: 'list-item',
-            children: [
-              { text: 'Live chat available ' },
-              { text: '24/7', bold: true },
-              { text: ' on our website' },
-            ],
+            children: [{ text: 'Live chat available ' }, { text: '24/7', bold: true }, { text: ' on our website' }],
           } as const,
           {
             type: 'list-item',
-            children: [
-              { text: 'Call our helpline: ' },
-              { text: '+1-800-HELP-NOW', code: true },
-            ],
+            children: [{ text: 'Call our helpline: ' }, { text: '+1-800-HELP-NOW', code: true }],
           } as const,
           {
             type: 'list-item',
@@ -154,27 +136,21 @@ export const dummyTextTabs: TextTab[] = [
       } as const,
       {
         type: 'paragraph',
-        children: [
-          { text: 'Average response time: ' },
-          { text: 'Under 2 hours', bold: true, underline: true },
-        ],
+        children: [{ text: 'Average response time: ' }, { text: 'Under 2 hours', bold: true, underline: true }],
       } as const,
     ],
+    order: 3,
   },
   {
-    id: 'terms',
-    text: [
+    id: 4,
+    content: [
       {
         type: 'heading-one',
         children: [{ text: 'Terms and Conditions' }],
       } as const,
       {
         type: 'paragraph',
-        children: [
-          { text: 'Please read and agree to our ' },
-          { text: 'terms and conditions', bold: true },
-          { text: ' before using our platform.' },
-        ],
+        children: [{ text: 'Please read and agree to our ' }, { text: 'terms and conditions', bold: true }, { text: ' before using our platform.' }],
       } as const,
       {
         type: 'heading-two',
@@ -185,23 +161,15 @@ export const dummyTextTabs: TextTab[] = [
         children: [
           {
             type: 'list-item',
-            children: [
-              { text: 'You must be ' },
-              { text: '18 years or older', bold: true },
-              { text: ' to use this service' },
-            ],
+            children: [{ text: 'You must be ' }, { text: '18 years or older', bold: true }, { text: ' to use this service' }],
           } as const,
           {
             type: 'list-item',
-            children: [
-              { text: 'Content must comply with our community guidelines' },
-            ],
+            children: [{ text: 'Content must comply with our community guidelines' }],
           } as const,
           {
             type: 'list-item',
-            children: [
-              { text: 'Account termination may occur for violations' },
-            ],
+            children: [{ text: 'Account termination may occur for violations' }],
           } as const,
           {
             type: 'list-item',
@@ -224,16 +192,14 @@ export const dummyTextTabs: TextTab[] = [
       } as const,
       {
         type: 'paragraph',
-        children: [
-          { text: 'Last updated: ' },
-          { text: 'December 2024', bold: true },
-        ],
+        children: [{ text: 'Last updated: ' }, { text: 'December 2024', bold: true }],
       } as const,
     ],
+    order: 4,
   },
   {
-    id: 'privacy',
-    text: [
+    id: 5,
+    content: [
       {
         type: 'heading-one',
         children: [{ text: 'Privacy Policy' }],
@@ -257,17 +223,11 @@ export const dummyTextTabs: TextTab[] = [
         children: [
           {
             type: 'list-item',
-            children: [
-              { text: 'End-to-end encryption for all sensitive data' },
-            ],
+            children: [{ text: 'End-to-end encryption for all sensitive data' }],
           } as const,
           {
             type: 'list-item',
-            children: [
-              { text: 'We ' },
-              { text: 'never sell', bold: true, underline: true },
-              { text: ' your personal information' },
-            ],
+            children: [{ text: 'We ' }, { text: 'never sell', bold: true, underline: true }, { text: ' your personal information' }],
           } as const,
           {
             type: 'list-item',
@@ -275,9 +235,7 @@ export const dummyTextTabs: TextTab[] = [
           } as const,
           {
             type: 'list-item',
-            children: [
-              { text: 'Regular security audits by third-party experts' },
-            ],
+            children: [{ text: 'Regular security audits by third-party experts' }],
           } as const,
         ],
       } as const,
@@ -290,24 +248,15 @@ export const dummyTextTabs: TextTab[] = [
         children: [
           {
             type: 'list-item',
-            children: [
-              { text: 'Account information: ' },
-              { text: 'email, name, preferences', italic: true },
-            ],
+            children: [{ text: 'Account information: ' }, { text: 'email, name, preferences', italic: true }],
           } as const,
           {
             type: 'list-item',
-            children: [
-              { text: 'Usage analytics: ' },
-              { text: 'anonymized performance data', italic: true },
-            ],
+            children: [{ text: 'Usage analytics: ' }, { text: 'anonymized performance data', italic: true }],
           } as const,
           {
             type: 'list-item',
-            children: [
-              { text: 'Content data: ' },
-              { text: 'your documents and projects', italic: true },
-            ],
+            children: [{ text: 'Content data: ' }, { text: 'your documents and projects', italic: true }],
           } as const,
         ],
       } as const,
@@ -321,5 +270,6 @@ export const dummyTextTabs: TextTab[] = [
         ],
       } as const,
     ],
+    order: 5,
   },
 ]

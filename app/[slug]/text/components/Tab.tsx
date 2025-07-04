@@ -1,11 +1,11 @@
-import { TextTab } from '@/app/[slug]/text/page'
+import { Text } from '@/app/types/text'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { motion } from 'framer-motion'
 import { X } from 'lucide-react'
 
 interface Props {
-  item?: TextTab
+  item?: Text
   isSelected?: boolean
   onClick?: () => void
   onRemove?: () => void

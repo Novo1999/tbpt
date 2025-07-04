@@ -47,7 +47,7 @@ const CodeElement = (props: RenderElementProps) => {
 }
 
 const DefaultElement = (props: RenderElementProps) => {
-  return <p {...props.attributes}>{props.children}</p>
+  return <div {...props.attributes}>{props.children}</div>
 }
 
 const Leaf = (props: RenderLeafProps) => {

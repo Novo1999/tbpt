@@ -9,19 +9,14 @@ export const accessSite = async (prevState: unknown, formData: FormData) => {
     const user = await prisma.user.findUnique({
       where: { slug: formData.get('slug') as string },
     })
-    console.log(user)
 
-    const isPasswordCorrect = bcrypt.compareSync(
-      formData.get('password') as string,
-      user?.password || ''
-    )
+    const isPasswordCorrect = bcrypt.compareSync(formData.get('password') as string, user?.password || '')
 
     if (isPasswordCorrect) {
       await login(user)
       return { status: isPasswordCorrect }
     } else return { status: isPasswordCorrect, message: 'Wrong Password' }
   } catch (error) {
-    console.log('🚀 ~ accessSite ~ error:', error)
-    return { message: 'Auth Error', status: false }
+    if (error instanceof Error) return { message: 'Auth Error', status: false }
   }
 }
