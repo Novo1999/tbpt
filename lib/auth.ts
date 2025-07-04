@@ -1,7 +1,8 @@
+'use server'
 import { User } from '@/app/types/user'
+import { PrismaClient } from '@prisma/client'
 import * as jose from 'jose'
 import { cookies } from 'next/headers'
-import { redirect } from 'next/navigation'
 import { NextRequest, NextResponse } from 'next/server'
 const { SignJWT, jwtVerify } = jose
 
@@ -9,7 +10,7 @@ const secretKey = process.env.AUTH_SECRET
 const key = new TextEncoder().encode(secretKey)
 
 const encrypt = async (payload: jose.JWTPayload) => {
-  return await new SignJWT(payload).setProtectedHeader({ alg: 'HS256' }).setIssuedAt().setExpirationTime('1 minute from now').sign(key)
+  return await new SignJWT(payload).setProtectedHeader({ alg: 'HS256' }).setIssuedAt().setExpirationTime('10 minute from now').sign(key)
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -92,6 +93,27 @@ const updateSession = async (request: NextRequest) => {
     return res
   }
 }
+const secret = new TextEncoder().encode(process.env.AUTH_SECRET)
 
-export { decrypt, encrypt, getSession, login, logout, updateSession }
+interface ExtendedPayload extends jose.JWTPayload {
+  userData: {
+    slug: string
+  }
+}
+const checkAuth = async (request: NextRequest, slug: string) => {
+  const token = request.cookies.get('session')?.value
+  if (!token) {
+    return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+  }
+
+  const { payload } = await jwtVerify<ExtendedPayload>(token, secret, {
+    algorithms: ['HS256'], // Specify the algorithm
+  })
+
+  if (slug !== payload?.userData?.slug) {
+    return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
+  }
+}
+
+export { checkAuth, decrypt, encrypt, getSession, login, logout, updateSession }
 

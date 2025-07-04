@@ -2,22 +2,8 @@
 import { selectedTabAtom, updateTabsAtom } from '@/app/[slug]/text/page'
 import { useAtomValue, useSetAtom } from 'jotai'
 import { CSSProperties, KeyboardEvent, useCallback, useState } from 'react'
-import {
-  BaseEditor,
-  createEditor,
-  Descendant,
-  Editor,
-  Element,
-  Transforms,
-} from 'slate'
-import {
-  Editable,
-  ReactEditor,
-  RenderElementProps,
-  RenderLeafProps,
-  Slate,
-  withReact,
-} from 'slate-react'
+import { BaseEditor, createEditor, Descendant, Editor, Element, Transforms } from 'slate'
+import { Editable, ReactEditor, RenderElementProps, RenderLeafProps, Slate, withReact } from 'slate-react'
 
 type CustomElement = {
   type: string
@@ -80,7 +66,7 @@ const TextEditor = () => {
         // Fix: Return a new array with updated tab
         return prev.map((prevTab) => {
           if (prevTab.id === tab?.id) {
-            return { ...prevTab, text: newValue } // Return new object
+            return { ...prevTab, content: newValue } // Return new object
           }
           return prevTab
         })
@@ -112,11 +98,7 @@ const TextEditor = () => {
         const [match] = Editor.nodes(editor, {
           match: (n) => Element.isElement(n) && n.type === 'code',
         })
-        Transforms.setNodes(
-          editor,
-          { type: match ? 'paragraph' : 'code' },
-          { match: (n) => Element.isElement(n) && Editor.isBlock(editor, n) }
-        )
+        Transforms.setNodes(editor, { type: match ? 'paragraph' : 'code' }, { match: (n) => Element.isElement(n) && Editor.isBlock(editor, n) })
         break
       }
       case 'b': {
@@ -143,17 +125,8 @@ const TextEditor = () => {
   }
 
   return (
-    <Slate
-      editor={editor}
-      initialValue={tab?.content || []}
-      onChange={handleEditorChange}
-    >
-      <Editable
-        renderLeaf={renderLeaf}
-        renderElement={renderEl}
-        onKeyDown={handleKeyDown}
-        className='border p-4 rounded-lg'
-      />
+    <Slate editor={editor} initialValue={tab?.content || []} onChange={handleEditorChange}>
+      <Editable renderLeaf={renderLeaf} renderElement={renderEl} onKeyDown={handleKeyDown} className="border p-4 rounded-lg" />
     </Slate>
   )
 }

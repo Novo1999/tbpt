@@ -5,13 +5,14 @@ import { Tab } from '@/app/[slug]/text/components/Tab'
 import { ParsedText } from '@/app/types/text'
 import { User } from '@/app/types/user'
 import { Button } from '@/components/ui/button'
+import { logout } from '@/lib/auth'
 import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, KeyboardSensor, PointerSensor, rectIntersection, useSensor, useSensors } from '@dnd-kit/core'
 import { arrayMove, rectSortingStrategy, SortableContext, sortableKeyboardCoordinates } from '@dnd-kit/sortable'
 import { useQuery } from '@tanstack/react-query'
 import { AnimatePresence, motion } from 'framer-motion'
 import { atom, useAtom } from 'jotai'
 import { Plus } from 'lucide-react'
-import { redirect, useParams, useRouter } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import { useEffect, useId } from 'react'
 import { Descendant } from 'slate'
 import TextEditor from './components/TextEditor'
@@ -70,7 +71,6 @@ const TextPage = () => {
     queryFn: async () => {
       try {
         const res = await fetch(`/api/texts/${slug}`)
-        console.log(res.status)
 
         if (res.status === 401) {
           replace('/')
@@ -82,7 +82,6 @@ const TextPage = () => {
       }
     },
   })
-  console.log(data)
   useEffect(() => {
     const texts = data?.texts || []
     const parsedTexts: ParsedText[] = texts.map((txt) => ({
@@ -164,7 +163,15 @@ const TextPage = () => {
           <Button>Reload</Button>
           <Button>Save</Button>
           <Button>Change Password</Button>
-          <Button>Delete</Button>
+          <Button variant="destructive">Delete</Button>
+          <Button
+            onClick={async () => {
+              await logout()
+              replace('/')
+            }}
+          >
+            Log Out
+          </Button>
         </div>
       </nav>
       <div className="window">
@@ -187,7 +194,7 @@ const TextPage = () => {
         <main className="mx-4 pt-4">
           <AnimatePresence mode="wait">
             <motion.div key={selectedTab ? selectedTab.id : 'empty'} animate={{ opacity: 1, y: 0 }} initial={{ opacity: 0, y: 20 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.15 }}>
-              {tabs.length > 0 && <TextEditor />}
+              <TextEditor />
             </motion.div>
           </AnimatePresence>
         </main>
