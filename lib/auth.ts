@@ -100,7 +100,7 @@ const updateSession = async (request: NextRequest) => {
 //   }
 
 //   const { payload } = await jwtVerify<ExtendedPayload>(token, secret, {
-//     algorithms: ['HS256'], // Specify the algorithm
+//     algorithms: ['HS256'],
 //   })
 
 //   if (slug !== payload?.userData?.slug) {

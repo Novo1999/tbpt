@@ -27,7 +27,7 @@ export const Tab = ({ item, onClick, onRemove, isSelected }: Props) => {
         onClick={onClick}
       >
         {/* <span className="truncate max-w-[80px] text-sm">{item?.text.slice(0, 10)}...</span> */}
-        <span className="truncate max-w-[80px] text-sm">hello...</span>
+        <span className="truncate max-w-[80px] text-sm">{item?.content?.find((c) => c.type === 'heading-one')?.children?.[0]?.text || 'New Text' + '...'}</span>
         <button
           className="text-gray-500 hover:text-red-500"
           onClick={(e) => {

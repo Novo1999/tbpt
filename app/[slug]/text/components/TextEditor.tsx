@@ -1,5 +1,5 @@
 'use client'
-import { selectedTabAtom, updateTabsAtom } from '@/app/[slug]/text/page'
+import { selectedTabAtom, updateTabsAtom } from '@/app/[slug]/text/atoms/textAtoms'
 import { useAtomValue, useSetAtom } from 'jotai'
 import { CSSProperties, KeyboardEvent, useCallback, useEffect, useState } from 'react'
 import { BaseEditor, createEditor, Descendant, Editor, Element, Transforms } from 'slate'
