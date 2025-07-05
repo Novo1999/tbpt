@@ -9,8 +9,23 @@ import { User } from '@/app/types/user'
 import { Button } from '@/components/ui/button'
 import { getLastItem } from '@/lib/array-util'
 import { logout } from '@/lib/auth'
-import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, KeyboardSensor, PointerSensor, rectIntersection, useSensor, useSensors } from '@dnd-kit/core'
-import { arrayMove, rectSortingStrategy, SortableContext, sortableKeyboardCoordinates } from '@dnd-kit/sortable'
+import {
+  DndContext,
+  DragEndEvent,
+  DragOverlay,
+  DragStartEvent,
+  KeyboardSensor,
+  PointerSensor,
+  rectIntersection,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core'
+import {
+  arrayMove,
+  rectSortingStrategy,
+  SortableContext,
+  sortableKeyboardCoordinates,
+} from '@dnd-kit/sortable'
 import { useQuery } from '@tanstack/react-query'
 import { AnimatePresence, motion } from 'framer-motion'
 import { atom, useAtom, useAtomValue, useSetAtom } from 'jotai'
@@ -54,18 +69,26 @@ export function closestItem<T>(arr: T[], item: T) {
 const tabsAtom = atom<ParsedText[]>([])
 export const selectedTabAtom = atom<ParsedText>()
 
-export const updateTabsAtom = atom(null, (get, set, update: ParsedText[] | ((prev: ParsedText[]) => ParsedText[])) => {
-  const currentValue = get(tabsAtom)
-  const newValue = typeof update === 'function' ? update(currentValue) : update
-  set(tabsAtom, newValue)
-})
+export const updateTabsAtom = atom(
+  null,
+  (get, set, update: ParsedText[] | ((prev: ParsedText[]) => ParsedText[])) => {
+    const currentValue = get(tabsAtom)
+    const newValue =
+      typeof update === 'function' ? update(currentValue) : update
+    set(tabsAtom, newValue)
+  }
+)
 
 const actionsAtom = atom<Action[]>([])
-const updateActionsAtom = atom([], (get, set, update: Action[] | ((prev: Action[]) => Action[])) => {
-  const currentValue = get(actionsAtom)
-  const newValue = typeof update === 'function' ? update(currentValue) : update
-  set(actionsAtom, newValue)
-})
+const updateActionsAtom = atom(
+  [],
+  (get, set, update: Action[] | ((prev: Action[]) => Action[])) => {
+    const currentValue = get(actionsAtom)
+    const newValue =
+      typeof update === 'function' ? update(currentValue) : update
+    set(actionsAtom, newValue)
+  }
+)
 
 const activeIdAtom = atom<number | null>()
 
@@ -79,7 +102,6 @@ const TextPage = () => {
   const updateTabs = useSetAtom(updateTabsAtom)
   const actions = useAtomValue(actionsAtom)
   const updateActions = useSetAtom(updateActionsAtom)
-  console.log('🚀 ~ TextPage ~ actions:', actions)
 
   const { data, isLoading } = useQuery<User>({
     queryKey: ['user', slug],
@@ -130,17 +152,52 @@ const TextPage = () => {
       setSelectedTab(closestItem(tabs, item))
     }
     updateTabs(removeItem(tabs, item))
+
+    // find the action with type 'add'
+    // then if the count of it is 1, filter those with type 'add'
+    // if the count of it is more than 1, decrement the count by 1
+    // check if item id is 0
+    // add an action with type 'delete' , count 1(if delete does not exist)
+    // increment count of delete action by 1 if exists
+    updateActions((prev) => {
+      if (item.id !== 0) {
+        const deleteAction = prev.find((action) => action.type === 'delete')
+        if ((deleteAction?.count || 0) >= 1) {
+          const update = [...prev]
+          prev = update.map((action) =>
+            action.type === 'delete'
+              ? { ...action, count: (deleteAction?.count || 0) + 1 }
+              : action
+          )
+        } else {
+          prev = [...prev, { type: 'delete', count: 1 }]
+        }
+      } else {
+        const addAction = prev.find((action) => action.type === 'add')
+        if (addAction?.count === 1)
+          prev = prev.filter((action) => action.type !== 'add')
+        if ((addAction?.count || 0) > 1)
+          prev = prev.map((action) =>
+            action.type === 'add'
+              ? { ...action, count: (addAction?.count || 0) - 1 }
+              : action
+          )
+      }
+
+      return prev
+    })
   }
 
   const add = () => {
     const newTab: ParsedText = {
-      id: getLastItem<ParsedText>(tabs).id + 1,
+      id: 0,
       content: [
         {
           type: 'paragraph',
-          children: [{ text: 'New item' }],
+          children: [{ text: '' }],
         },
       ],
+      userId: data?.id,
       order: getLastItem<ParsedText>(tabs).order + 1,
     }
 
@@ -149,7 +206,14 @@ const TextPage = () => {
     setSelectedTab(newTab)
     updateActions((prev) => {
       if (prev.length > 0) {
-        return prev.map((action) => ({ ...action, type: 'add', count: (action?.count || 0) + 1 }))
+        return prev.map((action) =>
+          action.type === 'add'
+            ? {
+                ...action,
+                count: (action?.count || 0) + 1,
+              }
+            : action
+        )
       } else {
         return [...prev, { type: 'add', count: 1 }]
       }
@@ -167,7 +231,9 @@ const TextPage = () => {
 
     if (active.id !== over?.id) {
       updateTabs((items) => {
-        const oldIndex = items.findIndex((item) => item.id === Number(active.id))
+        const oldIndex = items.findIndex(
+          (item) => item.id === Number(active.id)
+        )
         const newIndex = items.findIndex((item) => item.id === Number(over?.id))
         return arrayMove(items, oldIndex, newIndex)
       })
@@ -175,20 +241,22 @@ const TextPage = () => {
     }
   }
   const id = useId()
-
   return isLoading ? (
     <LoadingOverlay />
   ) : (
     <div className={`${isAuthenticated ? 'opacity-100' : 'opacity-0'} `}>
-      <nav className="flex justify-between flex-col sm:flex-row p-4">
-        <h1 className="text-5xl font-bold mb-4">
-          T<small className="text-lg">he</small> B<small className="text-lg">etter</small> P<small className="text-lg">rotected</small> T<small className="text-lg">ext</small>{' '}
+      <nav className='flex justify-between flex-col sm:flex-row p-4'>
+        <h1 className='text-5xl font-bold mb-4'>
+          T<small className='text-lg'>he</small> B
+          <small className='text-lg'>etter</small> P
+          <small className='text-lg'>rotected</small> T
+          <small className='text-lg'>ext</small>{' '}
         </h1>
-        <div className="flex gap-2">
+        <div className='flex gap-2'>
           <Button>Reload</Button>
-          <Button>Save</Button>
+          <Button disabled={!tabs.length}>Save</Button>
           <Button>Change Password</Button>
-          <Button variant="destructive">Delete</Button>
+          <Button variant='destructive'>Delete</Button>
           <Button
             onClick={async () => {
               await logout()
@@ -199,26 +267,55 @@ const TextPage = () => {
           </Button>
         </div>
       </nav>
-      <div className="window">
-        <nav className="flex justify-between flex-wrap items-center mx-4">
-          <div className="flex flex-wrap">
-            <DndContext id={id} sensors={sensors} collisionDetection={rectIntersection} onDragEnd={handleDragEnd} onDragStart={handleDragStart}>
-              <SortableContext items={tabs.map((item) => item.id)} strategy={rectSortingStrategy}>
+      <div className='window'>
+        <nav className='flex justify-between flex-wrap items-center mx-4'>
+          <div className='flex flex-wrap'>
+            <DndContext
+              id={id}
+              sensors={sensors}
+              collisionDetection={rectIntersection}
+              onDragEnd={handleDragEnd}
+              onDragStart={handleDragStart}
+            >
+              <SortableContext
+                items={tabs.map((item) => item.id)}
+                strategy={rectSortingStrategy}
+              >
                 {tabs.map((item) => (
-                  <Tab onRemove={() => remove(item)} key={item.id} item={item} isSelected={selectedTab?.id === item.id} onClick={() => setSelectedTab(item)} />
+                  <Tab
+                    onRemove={() => remove(item)}
+                    key={`${item.id}-${item.order}`}
+                    item={item}
+                    isSelected={selectedTab?.id === item.id}
+                    onClick={() => setSelectedTab(item)}
+                  />
                 ))}
               </SortableContext>
-              <DragOverlay>{activeId ? <Tab item={tabs.find((tab) => tab.id === activeId)} /> : null}</DragOverlay>
+              <DragOverlay>
+                {activeId ? (
+                  <Tab item={tabs.find((tab) => tab.id === activeId)} />
+                ) : null}
+              </DragOverlay>
             </DndContext>
           </div>
-          <motion.button onClick={add} className="rounded-lg border p-2 ml-2" whileTap={{ scale: 0.9 }}>
+          <motion.button
+            onClick={add}
+            className='rounded-lg border p-2 ml-2'
+            whileTap={{ scale: 0.9 }}
+          >
             <Plus />
           </motion.button>
         </nav>
 
-        <main className="mx-4 pt-4">
-          <AnimatePresence mode="wait">
-            <motion.div key={selectedTab ? selectedTab.id : 'empty'} animate={{ opacity: 1, y: 0 }} initial={{ opacity: 0, y: 20 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.15 }}>
+        <main className='mx-4 pt-4'>
+          <AnimatePresence mode='wait'>
+            <motion.div
+              key={selectedTab ? selectedTab.id : 'empty'}
+              animate={{ opacity: 1, y: 0 }}
+              initial={{ opacity: 0, y: 20 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.15 }}
+            >
               <TextEditor />
             </motion.div>
           </AnimatePresence>
