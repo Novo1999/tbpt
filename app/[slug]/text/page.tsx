@@ -1,16 +1,19 @@
 'use client'
 
+import LoadingOverlay from '@/app/[slug]/components/shared/LoadingOverlay'
 import { isAuthAtom } from '@/app/[slug]/components/UserAccessModal'
 import { Tab } from '@/app/[slug]/text/components/Tab'
+import { Action } from '@/app/types/action'
 import { ParsedText } from '@/app/types/text'
 import { User } from '@/app/types/user'
 import { Button } from '@/components/ui/button'
+import { getLastItem } from '@/lib/array-util'
 import { logout } from '@/lib/auth'
 import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, KeyboardSensor, PointerSensor, rectIntersection, useSensor, useSensors } from '@dnd-kit/core'
 import { arrayMove, rectSortingStrategy, SortableContext, sortableKeyboardCoordinates } from '@dnd-kit/sortable'
 import { useQuery } from '@tanstack/react-query'
 import { AnimatePresence, motion } from 'framer-motion'
-import { atom, useAtom } from 'jotai'
+import { atom, useAtom, useAtomValue, useSetAtom } from 'jotai'
 import { Plus } from 'lucide-react'
 import { useParams, useRouter } from 'next/navigation'
 import { useEffect, useId } from 'react'
@@ -56,15 +59,27 @@ export const updateTabsAtom = atom(null, (get, set, update: ParsedText[] | ((pre
   const newValue = typeof update === 'function' ? update(currentValue) : update
   set(tabsAtom, newValue)
 })
+
+const actionsAtom = atom<Action[]>([])
+const updateActionsAtom = atom([], (get, set, update: Action[] | ((prev: Action[]) => Action[])) => {
+  const currentValue = get(actionsAtom)
+  const newValue = typeof update === 'function' ? update(currentValue) : update
+  set(actionsAtom, newValue)
+})
+
 const activeIdAtom = atom<number | null>()
 
 const TextPage = () => {
   const { replace } = useRouter()
   const [activeId, setActiveId] = useAtom(activeIdAtom)
   const [isAuthenticated, setIsAuthenticated] = useAtom(isAuthAtom)
-  const [tabs, setTabs] = useAtom(tabsAtom)
+  const tabs = useAtomValue(tabsAtom)
   const [selectedTab, setSelectedTab] = useAtom(selectedTabAtom)
   const { slug } = useParams()
+  const updateTabs = useSetAtom(updateTabsAtom)
+  const actions = useAtomValue(actionsAtom)
+  const updateActions = useSetAtom(updateActionsAtom)
+  console.log('🚀 ~ TextPage ~ actions:', actions)
 
   const { data, isLoading } = useQuery<User>({
     queryKey: ['user', slug],
@@ -89,10 +104,10 @@ const TextPage = () => {
       content: JSON.parse(txt.content),
     }))
     if (texts.length > 0) {
-      setTabs(parsedTexts)
+      updateTabs(parsedTexts)
       setSelectedTab(parsedTexts[0])
     }
-  }, [data, setTabs, setSelectedTab])
+  }, [data, updateTabs, setSelectedTab])
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -109,26 +124,36 @@ const TextPage = () => {
   useEffect(() => {
     // if (!isAuthenticated) redirect(('/' + slug) as string)
   }, [isAuthenticated, slug])
+
   const remove = (item: ParsedText) => {
     if (item === selectedTab) {
       setSelectedTab(closestItem(tabs, item))
     }
-    setTabs(removeItem(tabs, item))
+    updateTabs(removeItem(tabs, item))
   }
+
   const add = () => {
-    setTabs((prev) => [
-      ...prev,
-      {
-        id: 0,
-        content: [
-          {
-            type: 'paragraph',
-            children: [{ text: 'New item' }],
-          },
-        ],
-        order: 0,
-      },
-    ])
+    const newTab: ParsedText = {
+      id: getLastItem<ParsedText>(tabs).id + 1,
+      content: [
+        {
+          type: 'paragraph',
+          children: [{ text: 'New item' }],
+        },
+      ],
+      order: getLastItem<ParsedText>(tabs).order + 1,
+    }
+
+    updateTabs((prev) => [...prev, newTab])
+
+    setSelectedTab(newTab)
+    updateActions((prev) => {
+      if (prev.length > 0) {
+        return prev.map((action) => ({ ...action, type: 'add', count: (action?.count || 0) + 1 }))
+      } else {
+        return [...prev, { type: 'add', count: 1 }]
+      }
+    })
   }
 
   const handleDragStart = (event: DragStartEvent) => {
@@ -141,7 +166,7 @@ const TextPage = () => {
     const { active, over } = event
 
     if (active.id !== over?.id) {
-      setTabs((items) => {
+      updateTabs((items) => {
         const oldIndex = items.findIndex((item) => item.id === Number(active.id))
         const newIndex = items.findIndex((item) => item.id === Number(over?.id))
         return arrayMove(items, oldIndex, newIndex)
@@ -152,7 +177,7 @@ const TextPage = () => {
   const id = useId()
 
   return isLoading ? (
-    <div>Loading...</div>
+    <LoadingOverlay />
   ) : (
     <div className={`${isAuthenticated ? 'opacity-100' : 'opacity-0'} `}>
       <nav className="flex justify-between flex-col sm:flex-row p-4">

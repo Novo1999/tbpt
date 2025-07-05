@@ -1,7 +1,7 @@
 'use client'
 import { selectedTabAtom, updateTabsAtom } from '@/app/[slug]/text/page'
 import { useAtomValue, useSetAtom } from 'jotai'
-import { CSSProperties, KeyboardEvent, useCallback, useState } from 'react'
+import { CSSProperties, KeyboardEvent, useCallback, useEffect, useState } from 'react'
 import { BaseEditor, createEditor, Descendant, Editor, Element, Transforms } from 'slate'
 import { Editable, ReactEditor, RenderElementProps, RenderLeafProps, Slate, withReact } from 'slate-react'
 
@@ -123,6 +123,17 @@ const TextEditor = () => {
       }
     }
   }
+
+  useEffect(() => {
+    if (!editor) return
+    if (tab) {
+      // Small delay to ensure DOM is updated
+      setTimeout(() => {
+        ReactEditor.focus(editor)
+        if (editor && editor.children && editor.children.length > 0) Transforms.select(editor, Editor.end(editor, []))
+      }, 50)
+    }
+  }, [tab?.id, editor, tab])
 
   return (
     <Slate editor={editor} initialValue={tab?.content || []} onChange={handleEditorChange}>

@@ -1,6 +1,5 @@
 'use server'
 import { User } from '@/app/types/user'
-import { PrismaClient } from '@prisma/client'
 import * as jose from 'jose'
 import { cookies } from 'next/headers'
 import { NextRequest, NextResponse } from 'next/server'
@@ -93,27 +92,21 @@ const updateSession = async (request: NextRequest) => {
     return res
   }
 }
-const secret = new TextEncoder().encode(process.env.AUTH_SECRET)
 
-interface ExtendedPayload extends jose.JWTPayload {
-  userData: {
-    slug: string
-  }
-}
-const checkAuth = async (request: NextRequest, slug: string) => {
-  const token = request.cookies.get('session')?.value
-  if (!token) {
-    return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
-  }
+// const checkAuth = async (request: NextRequest, slug: string) => {
+//   const token = request.cookies.get('session')?.value
+//   if (!token) {
+//     return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+//   }
 
-  const { payload } = await jwtVerify<ExtendedPayload>(token, secret, {
-    algorithms: ['HS256'], // Specify the algorithm
-  })
+//   const { payload } = await jwtVerify<ExtendedPayload>(token, secret, {
+//     algorithms: ['HS256'], // Specify the algorithm
+//   })
 
-  if (slug !== payload?.userData?.slug) {
-    return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
-  }
-}
+//   if (slug !== payload?.userData?.slug) {
+//     return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
+//   }
+// }
 
-export { checkAuth, decrypt, encrypt, getSession, login, logout, updateSession }
+export { decrypt, encrypt, getSession, login, logout, updateSession }
 
