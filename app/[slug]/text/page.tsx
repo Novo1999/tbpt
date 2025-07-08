@@ -14,6 +14,7 @@ import { Tab } from '@/app/[slug]/text/components/Tab'
 import { ParsedText, RawText, Text } from '@/app/types/text'
 import { User } from '@/app/types/user'
 import { Button } from '@/components/ui/button'
+import backendFetch from '@/lib/api-util'
 import { getLastItem } from '@/lib/array-util'
 import { logout } from '@/lib/auth'
 import { closestItem, removeItem } from '@/lib/dnd-util'
@@ -37,9 +38,10 @@ import {
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useAtom, useAtomValue, useSetAtom } from 'jotai'
-import { Plus } from 'lucide-react'
+import { Loader, Plus } from 'lucide-react'
 import { useParams, useRouter } from 'next/navigation'
 import { useEffect, useId } from 'react'
+import { toast } from 'sonner'
 import TextEditor from './components/TextEditor'
 
 const TextPage = () => {
@@ -47,7 +49,6 @@ const TextPage = () => {
   const [activeId, setActiveId] = useAtom(activeIdAtom)
   const [isAuthenticated, setIsAuthenticated] = useAtom(isAuthAtom)
   const tabs = useAtomValue(tabsAtom)
-  console.log("🚀 ~ TextPage ~ tabs:", tabs)
   const [selectedTab, setSelectedTab] = useAtom(selectedTabAtom)
   const { slug } = useParams()
   const updateTabs = useSetAtom(updateTabsAtom)
@@ -58,14 +59,13 @@ const TextPage = () => {
     queryKey: ['user', slug],
     queryFn: async () => {
       try {
-        const res = await fetch(`/api/texts/${slug}`)
-
-        if (res.status === 401) {
+        const response = await backendFetch.get(`/api/texts/${slug}`)
+        setIsAuthenticated(true)
+        return response.data
+      } catch (error: any) {
+        if (error.response?.status === 401) {
           replace('/')
         }
-        setIsAuthenticated(true)
-        return res.json()
-      } catch (error) {
         throw error
       }
     },
@@ -74,33 +74,62 @@ const TextPage = () => {
   const { mutate: addTextMutate, isPending: isAddTextPending } = useMutation({
     mutationFn: async (textBody: ParsedText) => {
       try {
-        const res = await fetch(`/api/texts/${slug}`, {
-          method: 'POST',
-          headers: {
-            Accept: 'application/json',
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ ...textBody, userId: data?.id }),
+        const response = await backendFetch.post(`/api/texts/${slug}`, {
+          ...textBody,
+          userId: data?.id,
         })
-        console.log(res)
+        console.log(response)
+        return response.data
       } catch (error) {
         throw error
       }
     },
   })
 
+  const { mutate: deleteTextMutate, isPending: isDeleteTextPending } =
+    useMutation({
+      mutationFn: async (ids: number[]) => {
+        try {
+          const response = await backendFetch.delete(
+            `/api/texts/${slug}/delete`,
+            {
+              data: { ids },
+            }
+          )
+          console.log(response)
+          return response.data
+        } catch (error) {
+          throw error
+        }
+      },
+    })
+
   const handleAddTextMutation = (textBody: ParsedText) => {
-    addTextMutate(textBody)
+    addTextMutate(textBody, {
+      onSuccess: () => toast.success('Added new text'),
+    })
+  }
+
+  const handleDeleteTextMutation = (ids: number[]) => {
+    deleteTextMutate(ids, {
+      onSuccess: () => toast.success('Deleted texts'),
+    })
   }
 
   const handleSaveMyData = () => {
     const hasAddAction = actions.find((action) => action.type === 'add')
+    const hasDeleteAction = actions.find((action) => action.type === 'delete')
     if (hasAddAction) {
       const newTextBodies = tabs.filter((tab) => !!tab.isNew)
       console.log('🚀 ~ handleSaveMyData ~ newTextBodies:', newTextBodies)
       newTextBodies.forEach(({ isNew, id, ...body }) =>
         handleAddTextMutation(body)
       )
+    }
+    if (hasDeleteAction) {
+      console.log('dwaid')
+      // Add delete logic here if needed
+      handleDeleteTextMutation(hasDeleteAction?.ids?.delete || [])
     }
   }
 
@@ -129,6 +158,8 @@ const TextPage = () => {
     // if (!isAuthenticated) redirect(('/' + slug) as string)
   }, [isAuthenticated, slug])
 
+  console.log(actions)
+
   const remove = (item: ParsedText) => {
     if (item === selectedTab) {
       setSelectedTab(closestItem(tabs, item))
@@ -144,15 +175,26 @@ const TextPage = () => {
     updateActions((prev) => {
       if (!item.isNew) {
         const deleteAction = prev.find((action) => action.type === 'delete')
+        console.log('🚀 ~ updateActions ~ deleteAction:', deleteAction)
         if ((deleteAction?.count || 0) >= 1) {
-          const update = [...prev]
-          prev = update.map((action) =>
+          prev = prev.map((action) =>
             action.type === 'delete'
-              ? { ...action, count: (deleteAction?.count || 0) + 1 }
+              ? {
+                  ...action,
+                  count: (deleteAction?.count || 0) + 1,
+                  ids: {
+                    ...action.ids,
+                    delete: [...action?.ids!.delete, item.id || 0],
+                  },
+                }
               : action
           )
+          return prev
         } else {
-          prev = [...prev, { type: 'delete', count: 1 }]
+          prev = [
+            ...prev,
+            { type: 'delete', count: 1, ids: { delete: [item.id || 0] } },
+          ]
         }
       } else {
         const addAction = prev.find((action) => action.type === 'add')
@@ -226,6 +268,11 @@ const TextPage = () => {
 
   const id = useId()
 
+  const getLoadingIsTrue = () => {
+    if (isAddTextPending) return true
+    if (isDeleteTextPending) return true
+  }
+
   return isLoading ? (
     <LoadingOverlay />
   ) : (
@@ -239,8 +286,11 @@ const TextPage = () => {
         </h1>
         <div className='flex gap-2'>
           <Button>Reload</Button>
-          <Button onClick={handleSaveMyData} disabled={!tabs.length}>
-            Save
+          <Button
+            onClick={handleSaveMyData}
+            disabled={!tabs.length || getLoadingIsTrue()}
+          >
+            {getLoadingIsTrue() ? <Loader className='animate-spin' /> : 'Save'}
           </Button>
           <Button>Change Password</Button>
           <Button variant='destructive'>Delete</Button>
