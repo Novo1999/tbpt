@@ -21,7 +21,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   if (slug !== payload?.userData?.slug) {
     return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
   }
-  const user: User = await prisma.user.findUnique({
+  const user = await prisma.user.findUnique({
     where: {
       slug,
     },

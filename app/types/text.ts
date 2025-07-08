@@ -1,7 +1,7 @@
 import { Descendant } from 'slate'
 
 export type Text<T extends 'raw' | 'parsed' = 'raw'> = {
-  id: number
+  id?: number
   content: T extends 'raw' ? string : Descendant[]
   userId?: number
   order: number

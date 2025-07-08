@@ -1,9 +1,9 @@
-import { RawText } from "./text"
+import { ParsedText } from "./text"
 
 export type User = {
   slug: string
   password: string
   id: number
-  texts?: RawText[]
+  texts?: ParsedText[]
 } | null
 

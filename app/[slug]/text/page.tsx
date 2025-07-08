@@ -57,7 +57,7 @@ const TextPage = () => {
             Accept: 'application/json',
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify(textBody),
+          body: JSON.stringify({ ...textBody, userId: data?.id }),
         })
         console.log(res)
       } catch (error) {
@@ -75,19 +75,16 @@ const TextPage = () => {
     if (hasAddAction) {
       const newTextBodies = tabs.filter((tab) => !!tab.isNew)
       console.log('🚀 ~ handleSaveMyData ~ newTextBodies:', newTextBodies)
-      newTextBodies.forEach(({ isNew, ...body }) => handleAddTextMutation(body))
+      newTextBodies.forEach(({ isNew, id, ...body }) => handleAddTextMutation(body))
     }
   }
 
   useEffect(() => {
     const texts = data?.texts || []
-    const parsedTexts: ParsedText[] = texts.map((txt) => ({
-      ...txt,
-      content: JSON.parse(txt.content),
-    }))
+
     if (texts.length > 0) {
-      updateTabs(parsedTexts)
-      setSelectedTab(parsedTexts[0])
+      updateTabs(texts)
+      setSelectedTab(texts[0])
     }
   }, [data, updateTabs, setSelectedTab])
 
@@ -140,15 +137,15 @@ const TextPage = () => {
 
   const add = () => {
     const newTab: ParsedText = {
-      id: getLastItem<ParsedText>(tabs).id + 1,
+      id: (getLastItem<ParsedText>(tabs)?.id || 0) + 1 || 1,
       content: [
         {
           type: 'paragraph',
           children: [{ text: '' }],
         },
       ],
-      userId: data?.id,
-      order: getLastItem<ParsedText>(tabs).order + 1,
+      // userId: data?.id,
+      order: getLastItem<ParsedText>(tabs)?.order + 1 || 1,
       isNew: true,
     }
 
@@ -221,12 +218,12 @@ const TextPage = () => {
         <nav className="flex justify-between flex-wrap items-center mx-4">
           <div className="flex flex-wrap">
             <DndContext id={id} sensors={sensors} collisionDetection={rectIntersection} onDragEnd={handleDragEnd} onDragStart={handleDragStart}>
-              <SortableContext items={tabs.map((item) => item.id)} strategy={rectSortingStrategy}>
+              <SortableContext items={tabs.map((item) => item?.id || 0)} strategy={rectSortingStrategy}>
                 {tabs.map((item) => (
                   <Tab onRemove={() => remove(item)} key={item.id} item={item} isSelected={selectedTab?.id === item.id} onClick={() => setSelectedTab(item)} />
                 ))}
               </SortableContext>
-              <DragOverlay>{activeId ? <Tab item={tabs.find((tab) => tab.id.toString() === activeId.toString())} /> : null}</DragOverlay>
+              <DragOverlay>{activeId ? <Tab item={tabs.find((tab) => (tab?.id || 0).toString() === activeId.toString())} /> : null}</DragOverlay>
             </DndContext>
           </div>
           <motion.button onClick={add} className="rounded-lg border p-2 ml-2" whileTap={{ scale: 0.9 }}>
