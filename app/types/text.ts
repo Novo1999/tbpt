@@ -6,6 +6,7 @@ export type Text<T extends 'raw' | 'parsed' = 'raw'> = {
   userId?: number
   order: number
   isNew?: boolean
+  tabHeader?: string
 }
 
 // Type aliases for convenience

@@ -8,14 +8,14 @@ async function main() {
   // Clear existing text data (optional)
   // await prisma.text.deleteMany({})
 
-  // await prisma.user.create({
-  //   data: {
-  //     // texts: [],
-  //     password: await bcrypt.hash('novo', 10),
-  //     slug: 'novo',
-  //     id: 1,
-  //   },
-  // })
+  await prisma.user.create({
+    data: {
+      // texts: [],
+      password: await bcrypt.hash('novo', 10),
+      slug: 'novo',
+      id: 1,
+    },
+  })
 
   // Seed the text data
   for (let i = 0; i < dummyTextTabs.length; i++) {

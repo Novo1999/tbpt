@@ -1,9 +1,32 @@
 'use client'
-import { selectedTabAtom, updateTabsAtom } from '@/app/[slug]/text/atoms/textAtoms'
+import {
+  selectedTabAtom,
+  updateTabsAtom,
+} from '@/app/[slug]/text/atoms/textAtoms'
 import { useAtomValue, useSetAtom } from 'jotai'
-import { CSSProperties, KeyboardEvent, useCallback, useEffect, useState } from 'react'
-import { BaseEditor, createEditor, Descendant, Editor, Element, Transforms } from 'slate'
-import { Editable, ReactEditor, RenderElementProps, RenderLeafProps, Slate, withReact } from 'slate-react'
+import {
+  CSSProperties,
+  KeyboardEvent,
+  useCallback,
+  useEffect,
+  useState,
+} from 'react'
+import {
+  BaseEditor,
+  createEditor,
+  Descendant,
+  Editor,
+  Element,
+  Transforms,
+} from 'slate'
+import {
+  Editable,
+  ReactEditor,
+  RenderElementProps,
+  RenderLeafProps,
+  Slate,
+  withReact,
+} from 'slate-react'
 
 type CustomElement = {
   type: string
@@ -98,7 +121,11 @@ const TextEditor = () => {
         const [match] = Editor.nodes(editor, {
           match: (n) => Element.isElement(n) && n.type === 'code',
         })
-        Transforms.setNodes(editor, { type: match ? 'paragraph' : 'code' }, { match: (n) => Element.isElement(n) && Editor.isBlock(editor, n) })
+        Transforms.setNodes(
+          editor,
+          { type: match ? 'paragraph' : 'code' },
+          { match: (n) => Element.isElement(n) && Editor.isBlock(editor, n) }
+        )
         break
       }
       case 'b': {
@@ -130,14 +157,24 @@ const TextEditor = () => {
       // Small delay to ensure DOM is updated
       setTimeout(() => {
         ReactEditor.focus(editor)
-        if (editor && editor.children && editor.children.length > 0) Transforms.select(editor, Editor.end(editor, []))
+        if (editor && editor.children && editor.children.length > 0)
+          Transforms.select(editor, Editor.end(editor, []))
       }, 50)
     }
   }, [tab?.id, editor, tab])
 
   return (
-    <Slate editor={editor} initialValue={tab?.content || []} onChange={handleEditorChange}>
-      <Editable renderLeaf={renderLeaf} renderElement={renderEl} onKeyDown={handleKeyDown} className="border p-4 rounded-lg" />
+    <Slate
+      editor={editor}
+      initialValue={tab?.content || []}
+      onChange={handleEditorChange}
+    >
+      <Editable
+        renderLeaf={renderLeaf}
+        renderElement={renderEl}
+        onKeyDown={handleKeyDown}
+        className='border p-4 rounded-lg'
+      />
     </Slate>
   )
 }
