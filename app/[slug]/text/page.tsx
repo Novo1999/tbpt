@@ -262,6 +262,20 @@ const TextPage = () => {
         const newIndex = items.findIndex((item) => item.id === Number(over?.id))
         return arrayMove(items, oldIndex, newIndex)
       })
+      updateActions((prev) => {
+        if (prev.length > 0) {
+          return prev.map((action) =>
+            action.type === 'reorder'
+              ? {
+                  ...action,
+                  count: (action?.count || 0) + 1,
+                }
+              : action
+          )
+        } else {
+          return [...prev, { type: 'reorder', count: 1 }]
+        }
+      })
       setActiveId(null)
     }
   }

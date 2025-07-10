@@ -1,3 +1,4 @@
+import { Order } from '@/app/types/order'
 import { RawText } from '@/app/types/text'
 import { User } from '@/app/types/user'
 import { ExtendedPayload, secret } from '@/lib/auth-util'
@@ -7,11 +8,17 @@ import { NextRequest, NextResponse } from 'next/server'
 
 const prisma = new PrismaClient()
 
-export async function GET(request: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ slug: string }> }
+) {
   const { slug } = await params
   const token = request.cookies.get('session')?.value
   if (!token) {
-    return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+    return NextResponse.json(
+      { error: 'Authentication required' },
+      { status: 401 }
+    )
   }
 
   const { payload } = await jwtVerify<ExtendedPayload>(token, secret, {
@@ -32,12 +39,18 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   return NextResponse.json(userObj)
 }
 
-export async function POST(request: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ slug: string }> }
+) {
   const { slug } = await params
 
   const token = request.cookies.get('session')?.value
   if (!token) {
-    return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+    return NextResponse.json(
+      { error: 'Authentication required' },
+      { status: 401 }
+    )
   }
 
   const { payload } = await jwtVerify<ExtendedPayload>(token, secret, {
@@ -60,11 +73,43 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   })
 }
 
-// export async function PUT(request: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
-//   const { slug } = await params
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: Promise<{ slug: string }> }
+) {
+  const { slug } = await params
 
-//   await checkAuth(request, slug)
-//   const body: RawText = await request.json()
+  const token = request.cookies.get('session')?.value
+  if (!token) {
+    return NextResponse.json(
+      { error: 'Authentication required' },
+      { status: 401 }
+    )
+  }
 
-//   const text = await prisma.text.updateMany()
-// }
+  const { payload } = await jwtVerify<ExtendedPayload>(token, secret, {
+    algorithms: ['HS256'],
+  })
+
+  if (slug !== payload?.userData?.slug) {
+    return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
+  }``
+  const body: Order[] = await request.json()
+
+  const updatePromises = Promise.all(
+    body.map((o) => {
+      prisma.text.update({
+        where: {
+          id: o.id,
+        },
+        data: {
+          order: o.order,
+        },
+      })
+    })
+  )
+
+  const result = await updatePromises
+
+  return result
+}
